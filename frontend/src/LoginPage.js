@@ -119,7 +119,7 @@ export default function LoginPage({ API_BASE_URL, csrfToken, theme, onLogin, fet
         <div className="auth-header">
           <div className="auth-icon">🔐</div>
           <h1>Welcome Back</h1>
-          <p className="auth-subtitle">Sign in to your CET324 Secure Account</p>
+          <p className="auth-subtitle">Sign in to your VaultEntry account</p>
         </div>
 
         {status.message && status.type !== "idle" && (

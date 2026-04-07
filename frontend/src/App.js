@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import Navbar from "./Navbar";
+import LandingPage from "./LandingPage";
 import LoginPage from "./LoginPage";
 import RegisterPage from "./RegisterPage";
 import DashboardPage from "./DashboardPage";
@@ -106,31 +108,21 @@ function App() {
 
   return (
     <div className={`app-root ${theme}`}>
-      {/* ── Navbar ── */}
-      <nav className="navbar">
-        <div className="navbar-inner">
-          <span className="navbar-brand">🔐 CET324 Secure App</span>
-          <button
-            type="button"
-            className="theme-toggle"
-            onClick={toggleTheme}
-            aria-label="Toggle dark mode"
-            title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
-          >
-            <span className="toggle-track">
-              <span className="toggle-thumb">
-                {theme === "light" ? "☀️" : "🌙"}
-              </span>
-            </span>
-          </button>
-        </div>
-      </nav>
+      <Navbar
+        isLoggedIn={isLoggedIn}
+        user={auth.user}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onLogout={handleLogout}
+      />
 
-      {/* ── Routes ── */}
       <main className="main-content">
         <Routes>
+          {/* Landing page — always visible */}
+          <Route path="/" element={<LandingPage isLoggedIn={isLoggedIn} />} />
+
           <Route
-            path="/"
+            path="/login"
             element={
               isLoggedIn ? (
                 <Navigate to="/dashboard" replace />
@@ -183,7 +175,7 @@ function App() {
                   onLogout={handleLogout}
                 />
               ) : (
-                <Navigate to="/" replace />
+                <Navigate to="/login" replace />
               )
             }
           />
@@ -192,7 +184,7 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <p>© 2026 Krisha Bimali</p>
+        <p>VaultEntry &middot; © 2026 Krisha Bimali</p>
       </footer>
     </div>
   );

@@ -126,14 +126,14 @@ export default function DashboardPage({ auth, fetchWithAuth, onLogout }) {
           </p>
         </div>
         <button type="button" className="btn-logout" onClick={onLogout}>
-          ⏻ Logout
+          Logout
         </button>
       </div>
 
       {/* Profile + Session Cards */}
       <div className="dashboard-grid">
         <div className="dash-card profile-detail-card">
-          <h2>📋 Profile Details</h2>
+          <h2>Profile Details</h2>
           <div className="profile-fields">
             <div className="profile-field">
               <span className="field-label">Username</span>
@@ -161,12 +161,12 @@ export default function DashboardPage({ auth, fetchWithAuth, onLogout }) {
             onClick={loadProfile}
             disabled={isLoadingProfile}
           >
-            {isLoadingProfile ? "Refreshing..." : "🔄 Refresh Profile"}
+            {isLoadingProfile ? "Refreshing…" : "Refresh Profile"}
           </button>
         </div>
 
         <div className="dash-card session-card">
-          <h2>⏱️ Session Info</h2>
+          <h2>Session Info</h2>
           <div className="session-timer">
             <div className="timer-circle">
               <span className="timer-value">{formattedTime}</span>
@@ -184,13 +184,13 @@ export default function DashboardPage({ auth, fetchWithAuth, onLogout }) {
       {isAdmin && (
         <div className="admin-section">
           <div className="admin-header">
-            <h2>🛡️ Admin Dashboard</h2>
+            <h2>Admin Dashboard</h2>
             <button
               className="btn-secondary"
               onClick={loadUsers}
               disabled={isLoadingUsers}
             >
-              {isLoadingUsers ? "Loading..." : "🔄 Refresh"}
+              {isLoadingUsers ? "Loading…" : "Refresh"}
             </button>
           </div>
 

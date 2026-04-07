@@ -180,7 +180,7 @@ export default function RegisterPage({
           <div className="auth-icon">🛡️</div>
           <h1>Create Account</h1>
           <p className="auth-subtitle">
-            Register for your secure CET324 account
+            Create your VaultEntry account
           </p>
         </div>
 
@@ -325,7 +325,7 @@ export default function RegisterPage({
             />
           </div>
 
-          {validationMessage && (
+          {validationMessage && status.type !== "success" && (
             <p className="helper-text">{validationMessage}</p>
           )}
 
@@ -343,7 +343,7 @@ export default function RegisterPage({
         <div className="auth-footer">
           <p>
             Already have an account?{" "}
-            <Link to="/" className="auth-link">
+            <Link to="/login" className="auth-link">
               Sign In
             </Link>
           </p>

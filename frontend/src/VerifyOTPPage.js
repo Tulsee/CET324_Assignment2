@@ -1,27 +1,56 @@
 import { useState, useRef, useEffect } from "react";
-import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function VerifyOTPPage({ API_BASE_URL, onLogin }) {
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email || "";
 
-  const [otpCode, setOtpCode] = useState("");
+  const [digits, setDigits] = useState(["", "", "", "", "", ""]);
+  const inputRefs = useRef([]);
   const [status, setStatus] = useState({ type: "idle", message: "" });
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
 
+  const otpCode = digits.join("");
+
   useEffect(() => {
-    if (!email) {
-      // If no email is provided via state, bounce back to login
-      navigate("/");
-    }
+    if (!email) navigate("/login");
   }, [email, navigate]);
+
+  useEffect(() => {
+    inputRefs.current[0]?.focus();
+  }, []);
+
+  const handleDigitChange = (index, value) => {
+    const v = value.replace(/\D/g, "").slice(-1);
+    const next = [...digits];
+    next[index] = v;
+    setDigits(next);
+    setStatus({ type: "idle", message: "" });
+    if (v && index < 5) inputRefs.current[index + 1]?.focus();
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !digits[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pasted) return;
+    e.preventDefault();
+    const next = [...digits];
+    for (let i = 0; i < 6; i++) next[i] = pasted[i] || "";
+    setDigits(next);
+    inputRefs.current[Math.min(pasted.length, 5)]?.focus();
+  };
 
   const handleVerify = async (e) => {
     e.preventDefault();
-    if (otpCode.trim().length !== 6) {
-      setStatus({ type: "error", message: "OTP must be exactly 6 digits." });
+    if (otpCode.length !== 6) {
+      setStatus({ type: "error", message: "Enter all 6 digits." });
       return;
     }
 
@@ -30,43 +59,27 @@ export default function VerifyOTPPage({ API_BASE_URL, onLogin }) {
       setStatus({ type: "idle", message: "" });
       const response = await fetch(`${API_BASE_URL}/api/verify-otp`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email,
-          otp_code: otpCode.trim(),
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp_code: otpCode }),
       });
-
       const data = await response.json();
 
       if (!response.ok) {
-        setStatus({
-          type: "error",
-          message: data.detail || "Verification failed.",
-        });
+        setStatus({ type: "error", message: data.detail || "Verification failed." });
+        setDigits(["", "", "", "", "", ""]);
+        inputRefs.current[0]?.focus();
         return;
       }
 
-      setStatus({
-        type: "success",
-        message: "Verification successful! Redirecting to dashboard...",
-      });
-
-      // Save token and navigate
+      setStatus({ type: "success", message: "Verified! Redirecting to dashboard…" });
       onLogin({
         token: data.access_token,
         expiresAt: Date.now() + data.expires_in * 1000,
         user: data.user,
       });
-      // App.js routes will automatically take care of navigating to dashboard
       navigate("/dashboard");
     } catch (error) {
-      setStatus({
-        type: "error",
-        message: error.message || "Error connecting to server.",
-      });
+      setStatus({ type: "error", message: error.message || "Error connecting to server." });
     } finally {
       setIsVerifying(false);
     }
@@ -78,50 +91,38 @@ export default function VerifyOTPPage({ API_BASE_URL, onLogin }) {
       setStatus({ type: "idle", message: "" });
       const response = await fetch(`${API_BASE_URL}/api/resend-otp`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
       });
-
       const data = await response.json();
-
       if (!response.ok) {
-        setStatus({
-          type: "error",
-          message: data.detail || "Failed to resend OTP.",
-        });
+        setStatus({ type: "error", message: data.detail || "Failed to resend OTP." });
         return;
       }
-
-      setStatus({
-        type: "success",
-        message: "A new OTP has been sent to your email.",
-      });
+      setStatus({ type: "success", message: "A new code has been sent to your email." });
+      setDigits(["", "", "", "", "", ""]);
+      inputRefs.current[0]?.focus();
     } catch (error) {
-      setStatus({
-        type: "error",
-        message: error.message || "Error connecting to server.",
-      });
+      setStatus({ type: "error", message: error.message || "Error connecting to server." });
     } finally {
       setIsResending(false);
     }
   };
 
-  if (!email) {
-    return null;
-  }
+  if (!email) return null;
 
   return (
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-header">
-          <div className="auth-icon">🛡️</div>
-          <h1>Verify Email</h1>
+          <div className="auth-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="40" height="40">
+              <path d="M3 8l7.89 5.26a2 2 0 0 0 2.22 0L21 8M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <h1>Check your email</h1>
           <p className="auth-subtitle">
-            Enter the 6-digit code sent to <strong>{email}</strong>
+            We sent a 6-digit code to <strong>{email}</strong>
           </p>
         </div>
 
@@ -130,46 +131,45 @@ export default function VerifyOTPPage({ API_BASE_URL, onLogin }) {
         )}
 
         <form onSubmit={handleVerify} className="auth-form">
-          <div className="input-group">
-            <label htmlFor="otpCode">One-Time Password (OTP)</label>
-            <div className="input-wrapper">
-              <span className="input-icon">🔑</span>
+          <div className="otp-boxes" onPaste={handlePaste}>
+            {digits.map((d, i) => (
               <input
-                id="otpCode"
+                key={i}
+                ref={(el) => (inputRefs.current[i] = el)}
+                className="otp-digit"
                 type="text"
-                name="otpCode"
-                placeholder="123456"
-                value={otpCode}
-                onChange={(e) => setOtpCode(e.target.value)}
+                inputMode="numeric"
+                maxLength={1}
+                value={d}
+                placeholder="·"
+                onChange={(e) => handleDigitChange(i, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(i, e)}
                 autoComplete="off"
-                maxLength={6}
-                required
               />
-            </div>
+            ))}
           </div>
 
-          <button type="submit" className="btn-primary" disabled={isVerifying}>
+          <button type="submit" className="btn-primary" disabled={isVerifying || otpCode.length < 6}>
             {isVerifying ? (
               <span className="btn-loading">
-                <span className="spinner"></span> Verifying...
+                <span className="spinner"></span> Verifying…
               </span>
             ) : (
-              "Verify OTP"
+              "Verify Code"
             )}
           </button>
         </form>
 
-        <div className="auth-footer" style={{ marginTop: "1rem" }}>
+        <div className="auth-footer">
           <p>
             Didn't receive the code?{" "}
             <button
               type="button"
-              className="auth-link"
+              className="auth-link btn-inline"
               onClick={handleResend}
               disabled={isResending}
-              style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: "inherit", padding: 0 }}
             >
-              Resend OTP
+              {isResending ? "Sending…" : "Resend code"}
             </button>
           </p>
         </div>
